@@ -1,0 +1,154 @@
+/**
+ * Media Library Organize — folder sidebar styles.
+ */
+
+body.mlo-has-sidebar #wpbody-content {
+	position: relative;
+}
+
+body.mlo-has-sidebar .wrap {
+	margin-left: 0;
+}
+
+.mlo-sidebar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 220px;
+	background: #fff;
+	border-right: 1px solid #c3c4c7;
+	box-sizing: border-box;
+	padding: 8px 0 16px;
+	z-index: 1000;
+	overflow: auto;
+}
+
+body.mlo-has-sidebar .media-frame,
+body.mlo-has-sidebar .wrap {
+	margin-left: 232px;
+}
+
+.mlo-sidebar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 10px;
+	margin-bottom: 6px;
+}
+
+.mlo-sidebar-title {
+	font-weight: 600;
+}
+
+.mlo-sidebar ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mlo-static-list {
+	border-bottom: 1px solid #f0f0f1;
+	padding-bottom: 6px;
+	margin-bottom: 6px;
+}
+
+.mlo-static-item,
+.mlo-folder-row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.mlo-static-item:hover,
+.mlo-folder-row:hover {
+	background: #f0f0f1;
+}
+
+.mlo-static-item.mlo-active,
+.mlo-folder.mlo-active > .mlo-folder-row {
+	background: #dcdcde;
+	font-weight: 600;
+}
+
+.mlo-folder-row.mlo-drop-hover {
+	background: #72aee6;
+	color: #fff;
+}
+
+.mlo-folder-row.mlo-drop-hover .mlo-folder-count {
+	color: #fff;
+}
+
+.mlo-folder-caret {
+	width: 12px;
+	font-size: 10px;
+	color: #787c82;
+}
+
+.mlo-folder.mlo-collapsed > .mlo-folder-children {
+	display: none;
+}
+
+.mlo-folder.mlo-collapsed > .mlo-folder-row .mlo-folder-caret {
+	transform: rotate(0deg);
+}
+
+.mlo-folder-row .mlo-folder-caret {
+	display: inline-block;
+	transform: rotate(90deg);
+}
+
+.mlo-folder:not(.mlo-has-children) > .mlo-folder-row .mlo-folder-caret {
+	visibility: hidden;
+}
+
+.mlo-folder-icon {
+	font-size: 13px;
+}
+
+.mlo-folder-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.mlo-folder-count {
+	font-size: 11px;
+	color: #787c82;
+}
+
+.mlo-folder-rename,
+.mlo-folder-delete {
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: #787c82;
+	padding: 0 2px;
+	opacity: 0;
+}
+
+.mlo-folder-row:hover .mlo-folder-rename,
+.mlo-folder-row:hover .mlo-folder-delete {
+	opacity: 1;
+}
+
+.mlo-folder-rename:hover {
+	color: #2271b1;
+}
+
+.mlo-folder-delete:hover {
+	color: #d63638;
+}
+
+.mlo-folder-children {
+	padding-left: 14px;
+}
+
+.attachment.mlo-dragging {
+	opacity: 0.5;
+}
