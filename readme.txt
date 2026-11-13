@@ -4,7 +4,7 @@ Tags: media, folders, media library, organization, file manager
 Requires at least: 5.6
 Tested up to: 6.7
 Requires PHP: 7.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -50,6 +50,9 @@ No files are ever deleted.
 Your media library returns to the default WordPress view. All files remain.
 
 == Changelog ==
+
+= 1.0.2 =
+* Fixed: update from GitHub now matches the plugin's actual installed folder name, so the update row appears and can be clicked in Dashboard → Updates and on the Plugins screen
 
 = 1.0.1 =
 * Fixed: drag-and-drop of attachments into folders (draggable was never initialized)

@@ -12,8 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class MLO_Updater {
 
-	const REPO        = 'RogueRazor/media-library-organized';
-	const PLUGIN_SLUG = 'media-library-organize';
+	const REPO = 'RogueRazor/media-library-organized';
 
 	public static function init() {
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'check_update' ) );
@@ -21,8 +20,16 @@ class MLO_Updater {
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 20, 3 );
 	}
 
+	/**
+	 * The plugin's real installed path, so updates match whatever folder
+	 * name the site actually uses (e.g. after cloning the repo directory).
+	 */
 	private static function plugin_basename() {
-		return self::PLUGIN_SLUG . '/' . self::PLUGIN_SLUG . '.php';
+		return plugin_basename( MLO_FILE );
+	}
+
+	private static function plugin_slug() {
+		return dirname( self::plugin_basename() );
 	}
 
 	public static function check_update( $transient ) {
@@ -38,7 +45,7 @@ class MLO_Updater {
 		$version = ltrim( $release['tag_name'], 'v' );
 		if ( ! $version || version_compare( MLO_VERSION, $version, '>=' ) ) {
 			$transient->no_update[ self::plugin_basename() ] = (object) array(
-				'slug'        => self::PLUGIN_SLUG,
+				'slug'        => self::plugin_slug(),
 				'plugin'      => self::plugin_basename(),
 				'new_version' => MLO_VERSION,
 				'icons'       => self::icons(),
@@ -55,7 +62,7 @@ class MLO_Updater {
 		}
 
 		$transient->response[ self::plugin_basename() ] = (object) array(
-			'slug'        => self::PLUGIN_SLUG,
+			'slug'        => self::plugin_slug(),
 			'plugin'      => self::plugin_basename(),
 			'new_version' => $version,
 			'package'     => $package,
@@ -73,11 +80,12 @@ class MLO_Updater {
 		}
 
 		$source_untrimmed = rtrim( $source, '/' );
-		if ( basename( $source_untrimmed ) === self::PLUGIN_SLUG ) {
+		$folder           = self::plugin_slug();
+		if ( basename( $source_untrimmed ) === $folder ) {
 			return $source;
 		}
 
-		$new_source = dirname( $source_untrimmed ) . '/' . self::PLUGIN_SLUG . '/';
+		$new_source = dirname( $source_untrimmed ) . '/' . $folder . '/';
 		if ( rename( $source_untrimmed, rtrim( $new_source, '/' ) ) ) {
 			return $new_source;
 		}
@@ -86,7 +94,7 @@ class MLO_Updater {
 	}
 
 	public static function plugin_info( $result, $action, $args ) {
-		if ( 'plugin_information' !== $action || ( isset( $args->slug ) && self::PLUGIN_SLUG !== $args->slug ) ) {
+		if ( 'plugin_information' !== $action || ( isset( $args->slug ) && self::plugin_slug() !== $args->slug ) ) {
 			return $result;
 		}
 
@@ -97,7 +105,7 @@ class MLO_Updater {
 
 		return (object) array(
 			'name'          => 'Media Library Organize',
-			'slug'          => self::PLUGIN_SLUG,
+			'slug'          => self::plugin_slug(),
 			'version'       => ltrim( $release['tag_name'], 'v' ),
 			'homepage'      => 'https://github.com/' . self::REPO,
 			'sections'      => array(

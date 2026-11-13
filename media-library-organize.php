@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Media Library Organize
  * Description:       Organize your WordPress media library with virtual drag-and-drop folders, inspired by FileBird. Files stay in place — only the folder tree changes.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least:  5.6
  * Requires PHP:       7.2
  * Author:             RogueRazor
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MLO_VERSION', '1.0.1' );
+define( 'MLO_VERSION', '1.0.2' );
 define( 'MLO_FILE', __FILE__ );
 define( 'MLO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MLO_URL', plugin_dir_url( __FILE__ ) );
