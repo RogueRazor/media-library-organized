@@ -11,7 +11,16 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build installable plugin zip
+        run: |
+          mkdir -p dist/media-library-organized
+          rsync -a --exclude='.github' --exclude='.git*' --exclude='dist' ./ dist/media-library-organized/
+          cd dist && zip -r ../media-library-organized.zip media-library-organized
+
       - name: Create GitHub release from tag
-        run: gh release create "${GITHUB_REF_NAME}" --repo "$GITHUB_REPOSITORY" --title "${GITHUB_REF_NAME}" --generate-notes
+        run: gh release create "${GITHUB_REF_NAME}" --repo "$GITHUB_REPOSITORY" --title "${GITHUB_REF_NAME}" --generate-notes media-library-organized.zip
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

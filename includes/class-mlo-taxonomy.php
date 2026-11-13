@@ -33,9 +33,9 @@ class MLO_Taxonomy {
 			array( 'attachment' ),
 			array(
 				'labels'            => array(
-					'name'          => __( 'Media Folders', 'media-library-organize' ),
-					'singular_name' => __( 'Media Folder', 'media-library-organize' ),
-					'menu_name'     => __( 'Folders', 'media-library-organize' ),
+					'name'          => __( 'Media Folders', 'media-library-organized' ),
+					'singular_name' => __( 'Media Folder', 'media-library-organized' ),
+					'menu_name'     => __( 'Folders', 'media-library-organized' ),
 				),
 				'public'            => false,
 				'hierarchical'     => true,
@@ -148,8 +148,8 @@ class MLO_Taxonomy {
 		}
 		$dropdown_args = array(
 			'taxonomy'        => self::TAXONOMY,
-			'show_option_all' => __( 'All folders', 'media-library-organize' ),
-			'show_option_none' => __( 'Unorganized', 'media-library-organize' ),
+			'show_option_all' => __( 'All folders', 'media-library-organized' ),
+			'show_option_none' => __( 'Unorganized', 'media-library-organized' ),
 			'hide_empty'      => false,
 			'hierarchical'    => true,
 			'name'            => 'mlo_folder',
@@ -157,7 +157,7 @@ class MLO_Taxonomy {
 			'value_field'     => 'term_id',
 			'selected'        => isset( $_GET['mlo_folder'] ) ? sanitize_text_field( wp_unslash( $_GET['mlo_folder'] ) ) : '',
 		);
-		echo '<label class="screen-reader-text" for="mlo_folder">' . esc_html__( 'Filter by folder', 'media-library-organize' ) . '</label>';
+		echo '<label class="screen-reader-text" for="mlo_folder">' . esc_html__( 'Filter by folder', 'media-library-organized' ) . '</label>';
 		wp_dropdown_categories( $dropdown_args );
 	}
 
@@ -168,7 +168,7 @@ class MLO_Taxonomy {
 	 * @return array
 	 */
 	public static function add_list_column( $columns ) {
-		$columns['mlo_folder'] = __( 'Folder', 'media-library-organize' );
+		$columns['mlo_folder'] = __( 'Folder', 'media-library-organized' );
 		return $columns;
 	}
 

@@ -149,7 +149,7 @@ class MLO_Rest {
 		if ( $parent > 0 ) {
 			$parent_term = get_term( $parent, MLO_Taxonomy::TAXONOMY );
 			if ( ! $parent_term || is_wp_error( $parent_term ) ) {
-				return new WP_Error( 'mlo_invalid_parent', __( 'Parent folder does not exist.', 'media-library-organize' ), array( 'status' => 400 ) );
+				return new WP_Error( 'mlo_invalid_parent', __( 'Parent folder does not exist.', 'media-library-organized' ), array( 'status' => 400 ) );
 			}
 		}
 
@@ -173,7 +173,7 @@ class MLO_Rest {
 		$id   = (int) $request['id'];
 		$term = get_term( $id, MLO_Taxonomy::TAXONOMY );
 		if ( ! $term || is_wp_error( $term ) ) {
-			return new WP_Error( 'mlo_not_found', __( 'Folder not found.', 'media-library-organize' ), array( 'status' => 404 ) );
+			return new WP_Error( 'mlo_not_found', __( 'Folder not found.', 'media-library-organized' ), array( 'status' => 404 ) );
 		}
 
 		$args = array();
@@ -183,13 +183,13 @@ class MLO_Rest {
 		if ( null !== $request['parent'] ) {
 			$parent = (int) $request['parent'];
 			if ( $parent === $id || self::is_descendant( $id, $parent ) ) {
-				return new WP_Error( 'mlo_invalid_parent', __( 'A folder cannot be moved into itself or its own subfolder.', 'media-library-organize' ), array( 'status' => 400 ) );
+				return new WP_Error( 'mlo_invalid_parent', __( 'A folder cannot be moved into itself or its own subfolder.', 'media-library-organized' ), array( 'status' => 400 ) );
 			}
 			$args['parent'] = $parent;
 		}
 
 		if ( empty( $args ) ) {
-			return new WP_Error( 'mlo_nothing_to_update', __( 'Nothing to update.', 'media-library-organize' ), array( 'status' => 400 ) );
+			return new WP_Error( 'mlo_nothing_to_update', __( 'Nothing to update.', 'media-library-organized' ), array( 'status' => 400 ) );
 		}
 
 		$result = wp_update_term( $id, MLO_Taxonomy::TAXONOMY, $args );
@@ -234,7 +234,7 @@ class MLO_Rest {
 		$id   = (int) $request['id'];
 		$term = get_term( $id, MLO_Taxonomy::TAXONOMY );
 		if ( ! $term || is_wp_error( $term ) ) {
-			return new WP_Error( 'mlo_not_found', __( 'Folder not found.', 'media-library-organize' ), array( 'status' => 404 ) );
+			return new WP_Error( 'mlo_not_found', __( 'Folder not found.', 'media-library-organized' ), array( 'status' => 404 ) );
 		}
 
 		// Children are promoted to the deleted folder's parent.
@@ -268,7 +268,7 @@ class MLO_Rest {
 		if ( '0' !== $folder ) {
 			$term = get_term( (int) $folder, MLO_Taxonomy::TAXONOMY );
 			if ( ! $term || is_wp_error( $term ) ) {
-				return new WP_Error( 'mlo_invalid_folder', __( 'Folder does not exist.', 'media-library-organize' ), array( 'status' => 400 ) );
+				return new WP_Error( 'mlo_invalid_folder', __( 'Folder does not exist.', 'media-library-organized' ), array( 'status' => 400 ) );
 			}
 		}
 

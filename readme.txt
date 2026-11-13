@@ -4,7 +4,7 @@ Tags: media, folders, media library, organization, file manager
 Requires at least: 5.6
 Tested up to: 6.7
 Requires PHP: 7.2
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,9 +30,10 @@ Features:
 
 == Installation ==
 
-1. Upload the `media-library-organize` folder to `/wp-content/plugins/`.
-2. Activate the plugin through the Plugins screen in WordPress.
-3. Open Media Library — the Folders sidebar appears on the left.
+1. Download `media-library-organized.zip` from the plugin's GitHub releases page.
+2. Install it via Plugins → Add New → Upload Plugin (or upload the extracted `media-library-organized` folder to `/wp-content/plugins/`).
+3. Activate the plugin through the Plugins screen in WordPress.
+4. Open Media Library — the Folders sidebar appears on the left.
 
 == Frequently Asked Questions ==
 
@@ -50,6 +51,10 @@ No files are ever deleted.
 Your media library returns to the default WordPress view. All files remain.
 
 == Changelog ==
+
+= 1.0.3 =
+* Renamed plugin folder and main file to `media-library-organized` to match the GitHub repo — everything now shares one name
+* Releases now ship an installable `media-library-organized.zip` with the correct folder structure
 
 = 1.0.2 =
 * Fixed: update from GitHub now matches the plugin's actual installed folder name, so the update row appears and can be clicked in Dashboard → Updates and on the Plugins screen
