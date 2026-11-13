@@ -110,6 +110,10 @@
 			$list.append(folderLi(folder, byParent));
 		});
 		markActive();
+		// The sidebar is outside the grid scope, so its folder rows need
+		// their own draggable/droppable initialization after every render.
+		makeDraggable($('#mlo-sidebar'));
+		populateMoveTargets();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -258,6 +262,100 @@
 		});
 	}
 
+	// ---------------------------------------------------------------------------
+	// Bulk-move bar (grid mode)
+	// ---------------------------------------------------------------------------
+
+	function populateMoveTargets() {
+		var $select = $('#mlo-move-target');
+		if (!$select.length) {
+			return;
+		}
+		$select.empty();
+		$select.append(
+			$('<option>', { value: '0', text: api.i18n.unorganized })
+		);
+		_.each(state.folders, function (folder) {
+			$select.append(
+				$('<option>', {
+					value: folder.id,
+					text: new Array(depthOf(folder) + 1).join('\u2013 ') + folder.name
+				})
+			);
+		});
+	}
+
+	function depthOf(folder) {
+		var byId = {};
+		_.each(state.folders, function (f) {
+			byId[f.id] = f;
+		});
+		var depth = 0;
+		var f = byId[folder.parent];
+		while (f && depth < 20) {
+			depth += 1;
+			f = byId[f.parent];
+		}
+		return depth;
+	}
+
+	function buildMoveBar() {
+		if ($('#mlo-move-bar').length) {
+			return;
+		}
+		var $bar = $(
+			'<div id="mlo-move-bar" class="mlo-move-bar" style="display:none">' +
+				'<span class="mlo-move-count"></span>' +
+				'<select id="mlo-move-target"></select>' +
+				'<button type="button" id="mlo-move-go" class="button button-primary button-small">' + api.i18n.move + '</button>' +
+				'<button type="button" id="mlo-move-cancel" class="button button-small">' + api.i18n.cancel + '</button>' +
+			'</div>'
+		);
+		$('#wpbody-content').prepend($bar);
+
+		$(document)
+			.on('click', '#mlo-move-go', function () {
+				var frame = wp.media && wp.media.frame;
+				var selection = frame && frame.state && frame.state().get('selection');
+				if (!selection || !selection.length) {
+					return;
+				}
+				var ids = [];
+				selection.each(function (model) {
+					ids.push(model.id);
+				});
+				moveAttachments(ids, $('#mlo-move-target').val());
+				selection.reset();
+				updateMoveBar();
+			})
+			.on('click', '#mlo-move-cancel', function () {
+				var frame = wp.media && wp.media.frame;
+				var selection = frame && frame.state && frame.state().get('selection');
+				if (selection) {
+					selection.reset();
+				}
+				updateMoveBar();
+			});
+	}
+
+	function updateMoveBar() {
+		var $bar = $('#mlo-move-bar');
+		if (!$bar.length) {
+			return;
+		}
+		var frame = wp.media && wp.media.frame;
+		var selection = frame && frame.state && frame.state().get('selection');
+		var count = selection ? selection.length : 0;
+		if (count > 0) {
+			$bar.show().find('.mlo-move-count').text(
+				count + ' ' + api.i18n.selected + ' \u2192'
+			);
+			$bar.css('left', '');
+		} else {
+			$bar.hide();
+		}
+	}
+
 	// Watch the grid DOM so items loaded later (scroll/pagination) become draggable too.
 	function observeGrid(view) {
 		if (state.gridObserver) {
@@ -294,6 +392,15 @@
 
 		bindUploader();
 		frame.on('ready', bindUploader);
+
+		// Bulk-move bar: track the grid selection and offer a dropdown move.
+		buildMoveBar();
+		var frameState = frame.state && frame.state();
+		if (frameState && frameState.get('selection')) {
+			var selection = frameState.get('selection');
+			selection.on('add remove reset', updateMoveBar);
+			updateMoveBar();
+		}
 	}
 
 	// New uploads land in the active folder.

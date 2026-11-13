@@ -174,3 +174,27 @@ body.mlo-sidebar-hidden #mlo-show-sidebar {
 .ui-draggable-dragging {
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
+.mlo-move-bar {
+	position: absolute;
+	top: 8px;
+	left: 232px;
+	right: 0;
+	z-index: 1001;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid #2271b1;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+body.mlo-sidebar-hidden .mlo-move-bar {
+	left: 20px;
+}
+
+.mlo-move-count {
+	font-weight: 600;
+}

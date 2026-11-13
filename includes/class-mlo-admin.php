@@ -60,6 +60,9 @@ class MLO_Admin {
 					'movingFailed'  => __( 'Could not move the selected items.', 'media-library-organized' ),
 					'creating'      => __( 'Creating folder…', 'media-library-organized' ),
 					'hideSidebar'   => __( 'Hide folder sidebar', 'media-library-organized' ),
+					'move'          => __( 'Move', 'media-library-organized' ),
+					'cancel'        => __( 'Cancel', 'media-library-organized' ),
+					'selected'      => __( 'selected', 'media-library-organized' ),
 				),
 			)
 		);
