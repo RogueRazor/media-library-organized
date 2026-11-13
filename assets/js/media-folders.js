@@ -1,7 +1,7 @@
 /**
  * Media Library Organize — folder tree sidebar.
  *
- * Adds a FileBird-style folder tree to the media library grid, with
+ * Adds a FileBird-style folder tree to the media library, with
  * drag-and-drop for attachments and folders, plus REST-backed CRUD.
  */
 /* global jQuery, _, wp, MLO_Settings */
@@ -16,8 +16,13 @@
 
 	var state = {
 		folders: [],
-		current: null // null = all files, '0' = unorganized, int = folder id
+		current: null, // null = all files, '0' = unorganized, int = folder id
+		gridObserver: null
 	};
+
+	// ---------------------------------------------------------------------------
+	// REST helpers
+	// ---------------------------------------------------------------------------
 
 	function request(method, path, data) {
 		return $.ajax({
@@ -65,7 +70,7 @@
 		var $row = $('<div>', { 'class': 'mlo-folder-row' }).appendTo($li);
 		$('<span>', { 'class': 'mlo-folder-caret', text: '\u25B8' }).appendTo($row);
 		$('<span>', { 'class': 'mlo-folder-icon', text: '\uD83D\uDCC1' }).appendTo($row);
-		var $label = $('<span>', {
+		$('<span>', {
 			'class': 'mlo-folder-name',
 			text: folder.name,
 			title: folder.name
@@ -105,14 +110,54 @@
 			$list.append(folderLi(folder, byParent));
 		});
 		markActive();
-		makeFoldersDroppable($list);
+	}
+
+	// ---------------------------------------------------------------------------
+	// Filtering (grid mode via Backbone, list mode via URL)
+	// ---------------------------------------------------------------------------
+
+	function isGridMode() {
+		return !!(wp.media && wp.media.frame && wp.media.frame.library);
+	}
+
+	function applyFilter() {
+		markActive();
+		if (isGridMode()) {
+			var props = wp.media.frame.library.props;
+			// Unset first so re-setting the same value triggers a requery.
+			props.unset('mlo_folder', { silent: true });
+			if (state.current === null) {
+				props.set('mlo_folder', null);
+			} else {
+				props.set('mlo_folder', String(state.current));
+			}
+		} else {
+			var params = new URLSearchParams(window.location.search);
+			if (state.current === null) {
+				params.delete('mlo_folder');
+			} else {
+				params.set('mlo_folder', String(state.current));
+			}
+			params.set('mode', 'list');
+			window.location.search = params.toString();
+		}
+	}
+
+	function refreshGrid() {
+		if (!isGridMode()) {
+			return;
+		}
+		var props = wp.media.frame.library.props;
+		props.unset('mlo_folder', { silent: true });
+		if (state.current !== null) {
+			props.set('mlo_folder', String(state.current));
+		} else {
+			props.set('mlo_folder', null);
+		}
 	}
 
 	function markActive() {
-		$('#mlo-folder-tree .mlo-folder').toggleClass(
-			'mlo-active',
-			false
-		);
+		$('#mlo-folder-tree .mlo-folder').removeClass('mlo-active');
 		$('#mlo-all-files').toggleClass('mlo-active', state.current === null);
 		$('#mlo-unorganized').toggleClass('mlo-active', state.current === '0');
 		if (state.current !== null && state.current !== '0') {
@@ -121,87 +166,84 @@
 	}
 
 	// ---------------------------------------------------------------------------
-	// Grid filtering
-	// ---------------------------------------------------------------------------
-
-	function applyFilter() {
-		var frame = wp.media && wp.media.frame;
-		if (!frame || !frame.library) {
-			return;
-		}
-		if (state.current === null) {
-			frame.library.props.unset('mlo_folder', { silent: true });
-			frame.library.props.set('mlo_folder', null);
-		} else {
-			frame.library.props.set('mlo_folder', String(state.current));
-		}
-		// Force a requery even when the value did not change.
-		frame.library.more();
-		frame.library.trigger('reset');
-	}
-
-	// ---------------------------------------------------------------------------
 	// Drag & drop
 	// ---------------------------------------------------------------------------
+
+	function makeDraggable($scope) {
+		$('.attachment', $scope).not('.mlo-drag-init').each(function () {
+			$(this)
+				.addClass('mlo-drag-init')
+				.draggable({
+					helper: 'clone',
+					revert: 'invalid',
+					cursor: 'move',
+					distance: 8,
+					opacity: 0.7,
+					zIndex: 100000,
+					start: function () {
+						$(this).addClass('mlo-dragging');
+					},
+					stop: function () {
+						$(this).removeClass('mlo-dragging');
+					}
+				});
+		});
+
+		$('.mlo-folder-row', $scope).not('.mlo-drag-init').each(function () {
+			$(this)
+				.addClass('mlo-drag-init')
+				.draggable({
+					helper: 'clone',
+					revert: 'invalid',
+					cursor: 'move',
+					distance: 8,
+					opacity: 0.7,
+					zIndex: 100000
+				});
+		});
+
+		$('.mlo-folder-row', $scope).not('.mlo-drop-init').each(function () {
+			$(this)
+				.addClass('mlo-drop-init')
+				.droppable({
+					accept: '.attachment, .mlo-folder-row',
+					hoverClass: 'mlo-drop-hover',
+					tolerance: 'pointer',
+					drop: function (event, ui) {
+						var $target = $(this).closest('.mlo-folder');
+						var targetId = $target.data('id');
+						if (ui.draggable.hasClass('mlo-folder-row')) {
+							var draggedId = ui.draggable.closest('.mlo-folder').data('id');
+							if (String(draggedId) === String(targetId)) {
+								return;
+							}
+							request('POST', 'folders/' + draggedId, { parent: targetId }).done(function () {
+								loadFolders();
+							});
+						} else {
+							var ids = selectedAttachmentIds(ui.draggable);
+							if (!ids.length) {
+								ids = [ui.draggable.data('id')];
+							}
+							moveAttachments(ids, targetId);
+						}
+					}
+				});
+		});
+	}
 
 	function selectedAttachmentIds($item) {
 		var ids = [];
 		var frame = wp.media && wp.media.frame;
-		if (frame && frame.state() && frame.state().get('selection')) {
+		if (frame && frame.state && frame.state() && frame.state().get('selection')) {
 			frame.state().get('selection').each(function (model) {
 				ids.push(model.id);
 			});
 		}
-		if (!ids.length && $item) {
-			ids.push($item.closest('.attachment, li').data('id'));
+		if (!ids.length && $item && $item.data('id')) {
+			ids.push($item.data('id'));
 		}
 		return _.uniq(ids);
-	}
-
-	function makeAttachmentsDraggable() {
-		var frame = wp.media && wp.media.frame;
-		if (!frame || !frame.content || !frame.content.get()) {
-			return;
-		}
-		var $attachments = frame.content.get().$el.find('.attachment');
-		$attachments.draggable({
-			helper: 'clone',
-			revert: 'invalid',
-			cursor: 'move',
-			start: function () {
-				$(this).addClass('mlo-dragging');
-			},
-			stop: function () {
-				$(this).removeClass('mlo-dragging');
-			}
-		});
-	}
-
-	function makeFoldersDroppable($scope) {
-		$('.mlo-folder-row', $scope).droppable({
-			accept: '.attachment, .mlo-folder',
-			hoverClass: 'mlo-drop-hover',
-			tolerance: 'pointer',
-			drop: function (event, ui) {
-				var $folderRow = $(this);
-				var folderId = $folderRow.closest('.mlo-folder').data('id');
-				if (ui.draggable.hasClass('mlo-folder')) {
-					var draggedId = ui.draggable.data('id');
-					if (draggedId === folderId) {
-						return;
-					}
-					request('POST', 'folders/' + draggedId, { parent: folderId }).done(function () {
-						loadFolders();
-					});
-				} else {
-					var ids = selectedAttachmentIds(ui.draggable);
-					if (!ids.length) {
-						ids = [ui.draggable.data('id')];
-					}
-					moveAttachments(ids, folderId);
-				}
-			}
-		});
 	}
 
 	function moveAttachments(ids, folderId) {
@@ -210,12 +252,63 @@
 			folder: String(folderId)
 		}).done(function () {
 			loadFolders();
-			var frame = wp.media && wp.media.frame;
-			if (frame && frame.library) {
-				frame.library.trigger('reset');
-			}
+			refreshGrid();
 		}).fail(function () {
 			window.alert(api.i18n.movingFailed);
+		});
+	}
+
+	// Watch the grid DOM so items loaded later (scroll/pagination) become draggable too.
+	function observeGrid(view) {
+		if (state.gridObserver) {
+			state.gridObserver.disconnect();
+		}
+		var timer = null;
+		state.gridObserver = new MutationObserver(function () {
+			window.clearTimeout(timer);
+			timer = window.setTimeout(function () {
+				makeDraggable(view.$el);
+			}, 100);
+		});
+		state.gridObserver.observe(view.el, { childList: true, subtree: true });
+	}
+
+	function watchFrame() {
+		var frame = wp.media && wp.media.frame;
+		if (!frame || !frame.library) {
+			return;
+		}
+
+		var applyToFrame = function () {
+			var view = frame.content && frame.content.get();
+			if (view && view.$el && view.$el.length) {
+				makeDraggable(view.$el);
+				observeGrid(view);
+			}
+		};
+
+		frame.on('content:render:browse', function () {
+			window.setTimeout(applyToFrame, 60);
+		});
+		window.setTimeout(applyToFrame, 60);
+
+		bindUploader();
+		frame.on('ready', bindUploader);
+	}
+
+	// New uploads land in the active folder.
+	function bindUploader() {
+		var frame = wp.media && wp.media.frame;
+		var view = frame && frame.uploader;
+		var uploader = view && view.uploader;
+		var plupload = uploader && (uploader.uploader || uploader);
+		if (!plupload || plupload._mloBound) {
+			return;
+		}
+		plupload._mloBound = true;
+		plupload.bind('BeforeUpload', function (up) {
+			up.settings.multipart_params.mlo_folder =
+				state.current === null ? '' : String(state.current);
 		});
 	}
 
@@ -268,28 +361,49 @@
 	}
 
 	// ---------------------------------------------------------------------------
-	// Sidebar
+	// Sidebar (with show/hide toggle)
 	// ---------------------------------------------------------------------------
+
+	var STORAGE_KEY = 'mlo-sidebar-hidden';
+
+	function sidebarHidden() {
+		try {
+			return window.localStorage.getItem(STORAGE_KEY) === '1';
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function setSidebarHidden(hidden) {
+		try {
+			window.localStorage.setItem(STORAGE_KEY, hidden ? '1' : '0');
+		} catch (e) {}
+		$('body')
+			.toggleClass('mlo-sidebar-hidden', hidden)
+			.toggleClass('mlo-has-sidebar', !hidden);
+	}
 
 	function buildSidebar() {
 		var $sidebar = $(
 			'<div id="mlo-sidebar" class="mlo-sidebar">' +
 				'<div class="mlo-sidebar-header">' +
 					'<span class="mlo-sidebar-title"></span>' +
-					'<button type="button" id="mlo-add-folder" class="button button-small" title="' + api.i18n.addFolder + '">+</button>' +
+					'<span class="mlo-sidebar-actions">' +
+						'<button type="button" id="mlo-add-folder" class="button button-small" title="' + api.i18n.addFolder + '">+</button>' +
+						'<button type="button" id="mlo-toggle-sidebar" class="button button-small" title="' + api.i18n.hideSidebar + '">&laquo;</button>' +
+					'</span>' +
 				'</div>' +
 				'<ul class="mlo-static-list">' +
 					'<li id="mlo-all-files" class="mlo-static-item mlo-active"><span class="mlo-folder-icon">\uD83C\uDF10</span> ' + api.i18n.allFiles + '</li>' +
 					'<li id="mlo-unorganized" class="mlo-static-item"><span class="mlo-folder-icon">\uD83D\uDDC2</span> ' + api.i18n.unorganized + '</li>' +
 				'</ul>' +
 				'<ul id="mlo-folder-tree" class="mlo-folder-tree"></ul>' +
-			'</div>'
+			'</div>' +
+			'<button type="button" id="mlo-show-sidebar" class="button">&rsaquo; ' + api.i18n.folders + '</button>'
 		);
-		$sidebar.find('.mlo-sidebar-title').text(api.i18n.folders);
+		$sidebar.filter('.mlo-sidebar').find('.mlo-sidebar-title').text(api.i18n.folders);
 		$('#wpbody-content').prepend($sidebar);
-		$('body').addClass('mlo-has-sidebar');
-
-		bindSidebarEvents();
+		setSidebarHidden(sidebarHidden());
 	}
 
 	function bindSidebarEvents() {
@@ -297,24 +411,26 @@
 			.on('click', '#mlo-add-folder', function () {
 				createFolder(0);
 			})
+			.on('click', '#mlo-toggle-sidebar', function () {
+				setSidebarHidden(true);
+			})
+			.on('click', '#mlo-show-sidebar', function () {
+				setSidebarHidden(false);
+			})
 			.on('click', '#mlo-all-files', function () {
 				state.current = null;
-				markActive();
 				applyFilter();
 			})
 			.on('click', '#mlo-unorganized', function () {
 				state.current = '0';
-				markActive();
 				applyFilter();
 			})
 			.on('click', '#mlo-folder-tree .mlo-folder-row', function (e) {
-				var $folder = $(this).closest('.mlo-folder');
 				if ($(e.target).hasClass('mlo-folder-caret')) {
-					$folder.toggleClass('mlo-collapsed');
+					$(this).closest('.mlo-folder').toggleClass('mlo-collapsed');
 					return;
 				}
-				state.current = $folder.data('id');
-				markActive();
+				state.current = $(this).closest('.mlo-folder').data('id');
 				applyFilter();
 			})
 			.on('click', '#mlo-folder-tree .mlo-folder-rename', function (e) {
@@ -325,58 +441,30 @@
 				e.stopPropagation();
 				deleteFolder($(this).closest('.mlo-folder'));
 			});
-
-		// Uploads land in the active folder.
-		$(document).on('ajaxSuccess', function (event, xhr, settings, data) {
-			if (settings && /action=upload-attachment/.test(settings.data || '')) {
-				var frame = wp.media && wp.media.frame;
-				if (frame && frame.library) {
-					frame.library.more();
-				}
-			}
-		});
 	}
 
 	// ---------------------------------------------------------------------------
 	// Boot
 	// ---------------------------------------------------------------------------
 
-	function watchGrid() {
-		var frame = wp.media && wp.media.frame;
-		if (!frame) {
-			return;
-		}
-		frame.on('content:render:browse', function () {
-			window.setTimeout(function () {
-				makeAttachmentsDraggable();
-				if (frame.uploader && frame.uploader.uploader) {
-					frame.uploader.uploader.bind('BeforeUpload', function (up) {
-						up.settings.multipart_params.mlo_folder =
-							state.current === null ? '' : String(state.current);
-					});
-				}
-			}, 100);
-		});
-		frame.on('attachments:render', makeAttachmentsDraggable);
-	}
-
 	function boot() {
 		if ($('#mlo-sidebar').length) {
 			return;
 		}
 		buildSidebar();
+		bindSidebarEvents();
 		loadFolders();
-		watchGrid();
+		watchFrame();
 	}
 
 	$(function () {
-		// Grid mode boots Backbone after DOM ready; wait for the frame.
+		// Grid mode boots Backbone after DOM ready; wait for the frame (or list mode).
 		var tries = 0;
 		var timer = window.setInterval(function () {
 			tries += 1;
-			var gridFrame = wp.media && wp.media.frame;
-			var isGrid = $('body').hasClass('upload-php') && !$('.wp-list-table.media').length;
-			if (gridFrame || !isGrid || tries > 40) {
+			var frameReady = wp.media && wp.media.frame;
+			var isListMode = $('.wp-list-table.media').length > 0;
+			if (frameReady || isListMode || tries > 40) {
 				window.clearInterval(timer);
 				boot();
 			}

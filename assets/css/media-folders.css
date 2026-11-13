@@ -2,12 +2,8 @@
  * Media Library Organize — folder sidebar styles.
  */
 
-body.mlo-has-sidebar #wpbody-content {
+#wpbody-content {
 	position: relative;
-}
-
-body.mlo-has-sidebar .wrap {
-	margin-left: 0;
 }
 
 .mlo-sidebar {
@@ -24,9 +20,26 @@ body.mlo-has-sidebar .wrap {
 	overflow: auto;
 }
 
-body.mlo-has-sidebar .media-frame,
-body.mlo-has-sidebar .wrap {
-	margin-left: 232px;
+/* Push all top-level admin content right of the sidebar — exactly once. */
+body.mlo-has-sidebar:not(.mlo-sidebar-hidden) #wpbody-content > *:not(.mlo-sidebar) {
+	margin-left: 232px !important;
+}
+
+body.mlo-sidebar-hidden .mlo-sidebar {
+	display: none;
+}
+
+#mlo-show-sidebar {
+	display: none;
+}
+
+body.mlo-sidebar-hidden #mlo-show-sidebar {
+	display: inline-block;
+	position: absolute;
+	top: 56px;
+	left: 0;
+	z-index: 1000;
+	border-radius: 0 3px 3px 0;
 }
 
 .mlo-sidebar-header {
@@ -39,6 +52,11 @@ body.mlo-has-sidebar .wrap {
 
 .mlo-sidebar-title {
 	font-weight: 600;
+}
+
+.mlo-sidebar-actions {
+	display: flex;
+	gap: 4px;
 }
 
 .mlo-sidebar ul {
@@ -76,7 +94,7 @@ body.mlo-has-sidebar .wrap {
 }
 
 .mlo-folder-row.mlo-drop-hover {
-	background: #72aee6;
+	background: #72aee6 !important;
 	color: #fff;
 }
 
@@ -94,13 +112,13 @@ body.mlo-has-sidebar .wrap {
 	display: none;
 }
 
-.mlo-folder.mlo-collapsed > .mlo-folder-row .mlo-folder-caret {
-	transform: rotate(0deg);
-}
-
 .mlo-folder-row .mlo-folder-caret {
 	display: inline-block;
 	transform: rotate(90deg);
+}
+
+.mlo-folder.mlo-collapsed > .mlo-folder-row .mlo-folder-caret {
+	transform: rotate(0deg);
 }
 
 .mlo-folder:not(.mlo-has-children) > .mlo-folder-row .mlo-folder-caret {
@@ -151,4 +169,8 @@ body.mlo-has-sidebar .wrap {
 
 .attachment.mlo-dragging {
 	opacity: 0.5;
+}
+
+.ui-draggable-dragging {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }

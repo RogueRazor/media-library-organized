@@ -59,6 +59,7 @@ class MLO_Admin {
 					'emptyName'     => __( 'Please enter a folder name.', 'media-library-organize' ),
 					'movingFailed'  => __( 'Could not move the selected items.', 'media-library-organize' ),
 					'creating'      => __( 'Creating folder…', 'media-library-organize' ),
+					'hideSidebar'   => __( 'Hide folder sidebar', 'media-library-organize' ),
 				),
 			)
 		);

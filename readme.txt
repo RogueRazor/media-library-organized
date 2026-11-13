@@ -4,7 +4,7 @@ Tags: media, folders, media library, organization, file manager
 Requires at least: 5.6
 Tested up to: 6.7
 Requires PHP: 7.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -50,6 +50,13 @@ No files are ever deleted.
 Your media library returns to the default WordPress view. All files remain.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fixed: drag-and-drop of attachments into folders (draggable was never initialized)
+* Fixed: folders can now be dragged into other folders
+* Fixed: content area no longer double-indented next to the sidebar
+* Added: show/hide toggle for the folder sidebar (remembered per browser)
+* Added: sidebar folder clicks now filter list mode too
 
 = 1.0.0 =
 * Initial release: folder tree, drag-and-drop, CRUD, grid + list filtering, upload targeting.
